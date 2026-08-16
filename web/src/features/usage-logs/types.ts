@@ -214,6 +214,8 @@ export interface LogOtherData {
   image_generation_call_price?: number
   image_generation_call_count?: number
   is_system_prompt_overwritten?: boolean
+  system_prompt_applied?: boolean
+  system_prompt_mode?: 'fallback' | 'prepend' | 'append' | 'replace'
   po?: string[]
   billing_source?: string
   group?: string

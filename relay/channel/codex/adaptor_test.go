@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
@@ -53,4 +54,30 @@ func TestConvertOpenAIResponsesRequestDropsPenalties(t *testing.T) {
 	assert.Nil(t, request.Temperature)
 	assert.Nil(t, request.FrequencyPenalty)
 	assert.Nil(t, request.PresencePenalty)
+}
+
+func TestConvertOpenAIResponsesRequestAppendsPersistentSystemPrompt(t *testing.T) {
+	adaptor := &Adaptor{}
+	info := &relaycommon.RelayInfo{
+		ChannelMeta: &relaycommon.ChannelMeta{
+			ChannelType: constant.ChannelTypeCodex,
+			ChannelSetting: dto.ChannelSettings{
+				SystemPrompt:     "persistent channel rule",
+				SystemPromptMode: dto.SystemPromptModeAppend,
+			},
+		},
+		RelayMode: relayconstant.RelayModeResponses,
+	}
+
+	converted, err := adaptor.ConvertOpenAIResponsesRequest(nil, info, dto.OpenAIResponsesRequest{
+		Model:        "gpt-5-codex",
+		Instructions: json.RawMessage(`"codex client rule"`),
+	})
+	require.NoError(t, err)
+
+	request, ok := converted.(dto.OpenAIResponsesRequest)
+	require.True(t, ok)
+	var instructions string
+	require.NoError(t, common.Unmarshal(request.Instructions, &instructions))
+	assert.Equal(t, "codex client rule\n\npersistent channel rule", instructions)
 }

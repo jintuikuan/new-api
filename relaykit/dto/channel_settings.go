@@ -11,18 +11,49 @@ import (
 )
 
 type ChannelSettings struct {
-	ForceFormat            bool   `json:"force_format,omitempty"`
-	ThinkingToContent      bool   `json:"thinking_to_content,omitempty"`
-	Proxy                  string `json:"proxy"`
-	PassThroughBodyEnabled bool   `json:"pass_through_body_enabled,omitempty"`
-	SystemPrompt           string `json:"system_prompt,omitempty"`
-	SystemPromptOverride   bool   `json:"system_prompt_override,omitempty"`
+	ForceFormat            bool             `json:"force_format,omitempty"`
+	ThinkingToContent      bool             `json:"thinking_to_content,omitempty"`
+	Proxy                  string           `json:"proxy"`
+	PassThroughBodyEnabled bool             `json:"pass_through_body_enabled,omitempty"`
+	SystemPrompt           string           `json:"system_prompt,omitempty"`
+	SystemPromptOverride   bool             `json:"system_prompt_override,omitempty"`
+	SystemPromptMode       SystemPromptMode `json:"system_prompt_mode,omitempty"`
 	// HTTPProtocol controls outbound HTTP version negotiation for this channel.
 	// Accepted values: "", "auto" (default), "http1".
 	HTTPProtocol string `json:"http_protocol,omitempty"`
 	// HTTP2ConnectionShards spreads HTTP/2 traffic across N independent transports
 	// (1-8). Zero/unset means 1. Ignored when HTTPProtocol is "http1".
 	HTTP2ConnectionShards int `json:"http2_connection_shards,omitempty"`
+}
+
+type SystemPromptMode string
+
+const (
+	SystemPromptModeFallback SystemPromptMode = "fallback"
+	SystemPromptModePrepend  SystemPromptMode = "prepend"
+	SystemPromptModeAppend   SystemPromptMode = "append"
+	SystemPromptModeReplace  SystemPromptMode = "replace"
+)
+
+// EffectiveSystemPromptMode preserves the legacy override flag when a channel
+// has not yet saved the explicit mode introduced later.
+func (s ChannelSettings) EffectiveSystemPromptMode() SystemPromptMode {
+	if s.SystemPromptMode != "" {
+		return s.SystemPromptMode
+	}
+	if s.SystemPromptOverride {
+		return SystemPromptModePrepend
+	}
+	return SystemPromptModeFallback
+}
+
+func (s ChannelSettings) ValidateSystemPromptMode() error {
+	switch s.SystemPromptMode {
+	case "", SystemPromptModeFallback, SystemPromptModePrepend, SystemPromptModeAppend, SystemPromptModeReplace:
+		return nil
+	default:
+		return fmt.Errorf("invalid system_prompt_mode: %s", s.SystemPromptMode)
+	}
 }
 
 const (

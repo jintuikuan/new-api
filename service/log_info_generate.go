@@ -92,6 +92,10 @@ func GenerateTextOtherInfo(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, m
 	if isSystemPromptOverwritten {
 		other["is_system_prompt_overwritten"] = true
 	}
+	if common.GetContextKeyBool(ctx, constant.ContextKeySystemPromptApplied) {
+		other["system_prompt_applied"] = true
+		other["system_prompt_mode"] = common.GetContextKeyString(ctx, constant.ContextKeySystemPromptMode)
+	}
 
 	adminInfo := make(map[string]interface{})
 	adminInfo["use_channel"] = ctx.GetStringSlice("use_channel")

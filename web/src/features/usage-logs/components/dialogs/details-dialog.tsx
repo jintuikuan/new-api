@@ -534,6 +534,21 @@ export function DetailsDialog(props: DetailsDialogProps) {
     isTopup &&
     props.isAdmin &&
     (topupAuditFields.length > 0 || showLegacyTopupWarning)
+  let systemPromptModeLabel = t('System prompt applied')
+  switch (other?.system_prompt_mode) {
+    case 'fallback':
+      systemPromptModeLabel = t('System prompt mode: fallback')
+      break
+    case 'prepend':
+      systemPromptModeLabel = t('System prompt mode: prepend')
+      break
+    case 'append':
+      systemPromptModeLabel = t('System prompt mode: append')
+      break
+    case 'replace':
+      systemPromptModeLabel = t('System prompt mode: replace')
+      break
+  }
   const manageOperator = (() => {
     if (!isManage || !props.isAdmin || !adminInfo) return null
     const username = adminInfo.admin_username
@@ -1026,20 +1041,36 @@ export function DetailsDialog(props: DetailsDialogProps) {
           />
         )}
 
-        {/* System prompt override */}
-        {other?.is_system_prompt_overwritten && (
+        {/* System prompt application */}
+        {other?.system_prompt_applied && (
           <DetailRow
             label={t('System Prompt')}
             value={
               <StatusBadge
-                label={t('Overwritten')}
-                variant='orange'
+                label={systemPromptModeLabel}
+                variant='green'
                 size='sm'
                 copyable={false}
               />
             }
           />
         )}
+
+        {/* Legacy system prompt override logs */}
+        {!other?.system_prompt_applied &&
+          other?.is_system_prompt_overwritten && (
+            <DetailRow
+              label={t('System Prompt')}
+              value={
+                <StatusBadge
+                  label={t('Overwritten')}
+                  variant='orange'
+                  size='sm'
+                  copyable={false}
+                />
+              }
+            />
+          )}
 
         {/* Model mapping */}
         {other?.is_model_mapped && other?.upstream_model_name && (

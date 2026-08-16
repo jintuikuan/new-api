@@ -292,6 +292,7 @@ const SENSITIVE_FORM_FIELDS = [
   'pass_through_body_enabled',
   'system_prompt',
   'system_prompt_override',
+  'system_prompt_mode',
   'allow_service_tier',
   'disable_store',
   'allow_safety_identifier',
@@ -343,7 +344,7 @@ function hasAdvancedSettingsValues(values: ChannelFormValues): boolean {
     values.force_format ||
     values.thinking_to_content ||
     values.pass_through_body_enabled ||
-    values.system_prompt_override ||
+    (values.system_prompt_mode && values.system_prompt_mode !== 'fallback') ||
     (values.http_protocol && values.http_protocol !== 'auto') ||
     (values.http2_connection_shards != null &&
       values.http2_connection_shards > 1) ||
@@ -756,7 +757,7 @@ export function ChannelMutateDrawer({
   const currentHttpProtocol = form.watch('http_protocol')
   const currentHttp2ConnectionShards = form.watch('http2_connection_shards')
   const currentSystemPrompt = form.watch('system_prompt')
-  const currentSystemPromptOverride = form.watch('system_prompt_override')
+  const currentSystemPromptMode = form.watch('system_prompt_mode')
   const currentAllowServiceTier = form.watch('allow_service_tier')
   const currentDisableStore = form.watch('disable_store')
   const currentAllowSafetyIdentifier = form.watch('allow_safety_identifier')
@@ -1024,7 +1025,7 @@ export function ChannelMutateDrawer({
     currentDisableTaskPollingSleep ||
     currentProxy?.trim() ||
     currentSystemPrompt?.trim() ||
-    currentSystemPromptOverride ||
+    (currentSystemPromptMode && currentSystemPromptMode !== 'fallback') ||
     (currentHttpProtocol && currentHttpProtocol !== 'auto') ||
     (currentHttp2ConnectionShards != null && currentHttp2ConnectionShards > 1)
   )
@@ -4329,17 +4330,13 @@ export function ChannelMutateDrawer({
                                   <FormLabel>{t('System Prompt')}</FormLabel>
                                   <FormControl>
                                     <Textarea
-                                      placeholder={t(
-                                        'Enter system prompt (user prompt takes priority)'
-                                      )}
+                                      placeholder={t('System Prompt')}
                                       rows={3}
                                       {...field}
                                     />
                                   </FormControl>
                                   <FormDescription>
-                                    {t(
-                                      'Default system prompt for this channel'
-                                    )}
+                                    {t('System prompt')}
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
@@ -4348,25 +4345,50 @@ export function ChannelMutateDrawer({
 
                             <FormField
                               control={form.control}
-                              name='system_prompt_override'
+                              name='system_prompt_mode'
                               render={({ field }) => (
-                                <FormItem className='flex items-center justify-between'>
-                                  <div className='space-y-0.5'>
-                                    <FormLabel>
-                                      {t('System Prompt Concatenation')}
-                                    </FormLabel>
-                                    <FormDescription>
-                                      {t(
-                                        'Concatenate channel system prompt with user&apos;s prompt'
-                                      )}
-                                    </FormDescription>
-                                  </div>
-                                  <FormControl>
-                                    <Switch
-                                      checked={field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                  </FormControl>
+                                <FormItem>
+                                  <FormLabel>
+                                    {t('System Prompt Mode')}
+                                  </FormLabel>
+                                  <Select
+                                    value={field.value || 'fallback'}
+                                    onValueChange={field.onChange}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectItem value='fallback'>
+                                          {t(
+                                            'Use only when client instructions are missing'
+                                          )}
+                                        </SelectItem>
+                                        <SelectItem value='prepend'>
+                                          {t(
+                                            'Place before client instructions'
+                                          )}
+                                        </SelectItem>
+                                        <SelectItem value='append'>
+                                          {t(
+                                            'Place after client instructions (recommended for Codex)'
+                                          )}
+                                        </SelectItem>
+                                        <SelectItem value='replace'>
+                                          {t('Replace client instructions')}
+                                        </SelectItem>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription>
+                                    {t(
+                                      'Responses requests apply the channel prompt on every request in prepend, append, or replace mode'
+                                    )}
+                                  </FormDescription>
+                                  <FormMessage />
                                 </FormItem>
                               )}
                             />

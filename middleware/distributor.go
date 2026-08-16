@@ -479,6 +479,8 @@ func SetupContextForSelectedChannel(c *gin.Context, channel *model.Channel, mode
 	common.SetContextKey(c, constant.ContextKeyChannelBaseUrl, channel.GetBaseURL())
 
 	common.SetContextKey(c, constant.ContextKeySystemPromptOverride, false)
+	common.SetContextKey(c, constant.ContextKeySystemPromptApplied, false)
+	common.SetContextKey(c, constant.ContextKeySystemPromptMode, "")
 
 	// TODO: api_version统一
 	switch channel.Type {

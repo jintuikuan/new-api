@@ -76,6 +76,33 @@ function isOptionalProxyURL(value: string | undefined): boolean {
 export const HTTP_PROTOCOL_AUTO = 'auto'
 export const HTTP_PROTOCOL_HTTP1 = 'http1'
 export const MAX_HTTP2_CONNECTION_SHARDS = 8
+export const SYSTEM_PROMPT_MODE_FALLBACK = 'fallback'
+export const SYSTEM_PROMPT_MODE_PREPEND = 'prepend'
+export const SYSTEM_PROMPT_MODE_APPEND = 'append'
+export const SYSTEM_PROMPT_MODE_REPLACE = 'replace'
+
+export type SystemPromptMode =
+  | typeof SYSTEM_PROMPT_MODE_FALLBACK
+  | typeof SYSTEM_PROMPT_MODE_PREPEND
+  | typeof SYSTEM_PROMPT_MODE_APPEND
+  | typeof SYSTEM_PROMPT_MODE_REPLACE
+
+export function normalizeSystemPromptMode(
+  value: unknown,
+  legacyOverride = false
+): SystemPromptMode {
+  if (
+    value === SYSTEM_PROMPT_MODE_FALLBACK ||
+    value === SYSTEM_PROMPT_MODE_PREPEND ||
+    value === SYSTEM_PROMPT_MODE_APPEND ||
+    value === SYSTEM_PROMPT_MODE_REPLACE
+  ) {
+    return value
+  }
+  return legacyOverride
+    ? SYSTEM_PROMPT_MODE_PREPEND
+    : SYSTEM_PROMPT_MODE_FALLBACK
+}
 
 export function normalizeHttpProtocol(
   value: string | undefined | null
@@ -264,6 +291,9 @@ export const channelFormSchema = z
     pass_through_body_enabled: z.boolean().optional(),
     system_prompt: z.string().optional(),
     system_prompt_override: z.boolean().optional(),
+    system_prompt_mode: z
+      .enum(['fallback', 'prepend', 'append', 'replace'])
+      .optional(),
     // Type-specific settings (stored in settings JSON)
     is_enterprise_account: z.boolean().optional(), // OpenRouter specific
     vertex_key_type: z.enum(['json', 'api_key']).optional(), // Vertex AI specific
@@ -436,6 +466,7 @@ export const CHANNEL_FORM_DEFAULT_VALUES: ChannelFormValues = {
   pass_through_body_enabled: false,
   system_prompt: '',
   system_prompt_override: false,
+  system_prompt_mode: SYSTEM_PROMPT_MODE_FALLBACK,
   // Type-specific settings
   is_enterprise_account: false,
   vertex_key_type: 'json',
@@ -476,6 +507,7 @@ export function transformChannelToFormDefaults(
     pass_through_body_enabled: false,
     system_prompt: '',
     system_prompt_override: false,
+    system_prompt_mode: SYSTEM_PROMPT_MODE_FALLBACK as SystemPromptMode,
   }
 
   if (channel.setting) {
@@ -494,6 +526,10 @@ export function transformChannelToFormDefaults(
         pass_through_body_enabled: parsed.pass_through_body_enabled || false,
         system_prompt: parsed.system_prompt || '',
         system_prompt_override: parsed.system_prompt_override || false,
+        system_prompt_mode: normalizeSystemPromptMode(
+          parsed.system_prompt_mode,
+          parsed.system_prompt_override === true
+        ),
       }
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -604,13 +640,21 @@ export function transformChannelToFormDefaults(
  * Build the setting JSON string from form extra settings
  */
 export function buildSettingJSON(formData: ChannelFormValues): string {
+  const systemPromptMode = normalizeSystemPromptMode(
+    formData.system_prompt_mode,
+    formData.system_prompt_override
+  )
   const settingObj: Record<string, unknown> = {
     force_format: formData.force_format || false,
     thinking_to_content: formData.thinking_to_content || false,
     proxy: formData.proxy?.trim() || '',
     pass_through_body_enabled: formData.pass_through_body_enabled || false,
     system_prompt: formData.system_prompt || '',
-    system_prompt_override: formData.system_prompt_override || false,
+    system_prompt_override: systemPromptMode !== SYSTEM_PROMPT_MODE_FALLBACK,
+  }
+
+  if (systemPromptMode !== SYSTEM_PROMPT_MODE_FALLBACK) {
+    settingObj.system_prompt_mode = systemPromptMode
   }
 
   const protocol = normalizeHttpProtocol(formData.http_protocol)
