@@ -23,6 +23,9 @@ import type { StatusBadgeProps } from '@/components/status-badge'
 
 import type { LogStatistics, LogCategory } from './types'
 
+/** Refresh usage logs while the log page is open. */
+export const USAGE_LOGS_REFRESH_INTERVAL_MS = 5000
+
 // ============================================================================
 // Default Values
 // ============================================================================

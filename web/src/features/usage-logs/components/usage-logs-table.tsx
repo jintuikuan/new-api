@@ -35,6 +35,7 @@ import {
   DEFAULT_LOGS_DATA,
   LOG_TYPE_ALL_VALUE,
   LOG_TYPE_ENUM,
+  USAGE_LOGS_REFRESH_INTERVAL_MS,
 } from '../constants'
 import { useColumnsByCategory } from '../lib/columns'
 import { parseLogOther } from '../lib/format'
@@ -150,6 +151,7 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
       }
       return undefined
     },
+    refetchInterval: USAGE_LOGS_REFRESH_INTERVAL_MS,
   })
 
   const logs = data?.items || []
