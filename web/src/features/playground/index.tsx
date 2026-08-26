@@ -23,6 +23,7 @@ import {
   usePlaygroundConversation,
   usePlaygroundOptions,
   usePlaygroundState,
+  useImageGeneration,
 } from './hooks'
 
 export function Playground() {
@@ -46,6 +47,24 @@ export function Playground() {
     parameterEnabled,
     onMessageUpdate: updateMessages,
   })
+
+  const { generateImage, isGeneratingImage, stopImageGeneration } =
+    useImageGeneration({
+      config,
+      messages,
+      models,
+      onMessageUpdate: updateMessages,
+    })
+
+  const isGeneratingAnything = isGenerating || isGeneratingImage
+
+  const handleStopGeneration = () => {
+    if (isGeneratingImage) {
+      stopImageGeneration()
+      return
+    }
+    stopGeneration()
+  }
 
   const {
     editingMessageKey,
@@ -85,7 +104,7 @@ export function Playground() {
           onEditMessage={handleEditMessage}
           onDeleteMessage={handleDeleteMessage}
           onSelectPrompt={handleSendMessage}
-          isGenerating={isGenerating}
+          isGenerating={isGeneratingAnything}
           editingKey={editingMessageKey}
           onCancelEdit={handleEditOpenChange}
           onSaveEdit={(newContent) => applyEdit(newContent, false)}
@@ -97,19 +116,20 @@ export function Playground() {
       <div className='mx-auto w-full max-w-4xl'>
         <PlaygroundInput
           config={config}
-          disabled={isGenerating}
+          disabled={isGeneratingAnything}
           groups={groups}
           groupValue={config.group}
-          isGenerating={isGenerating}
+          isGenerating={isGeneratingAnything}
           isModelLoading={isLoadingModels}
           modelValue={config.model}
           models={models}
           onGroupChange={(value) => updateConfig('group', value)}
+          onGenerateImage={generateImage}
           onConfigChange={updateConfig}
           onClearMessages={handleClearMessages}
           onModelChange={(value) => updateConfig('model', value)}
           onParameterEnabledChange={updateParameterEnabled}
-          onStop={stopGeneration}
+          onStop={handleStopGeneration}
           onSubmit={handleSendMessage}
           parameterEnabled={parameterEnabled}
           hasMessages={messages.length > 0}

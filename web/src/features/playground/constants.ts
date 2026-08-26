@@ -35,8 +35,14 @@ export const MESSAGE_STATUS = {
 // API endpoints
 export const API_ENDPOINTS = {
   CHAT_COMPLETIONS: '/pg/chat/completions',
+  IMAGE_GENERATIONS: '/pg/images/generations',
   USER_MODELS: '/api/user/models',
   USER_GROUPS: '/api/user/self/groups',
+} as const
+
+export const PLAYGROUND_ATTACHMENT_LIMITS = {
+  MAX_FILES: 6,
+  MAX_FILE_SIZE: 10 * 1024 * 1024,
 } as const
 
 // Default group — uses 'default' as the safe fallback; auto-group is

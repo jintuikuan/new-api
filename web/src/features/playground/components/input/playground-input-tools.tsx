@@ -16,14 +16,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { GlobeIcon, PaperclipIcon, Trash2Icon } from 'lucide-react'
-import { useState } from 'react'
+import {
+  GlobeIcon,
+  ImagesIcon,
+  PaperclipIcon,
+  SparklesIcon,
+  Trash2Icon,
+} from 'lucide-react'
+import { type ChangeEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import {
   PromptInputButton,
   PromptInputTools,
+  usePromptInputAttachments,
 } from '@/components/ai-elements/prompt-input'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
@@ -51,6 +58,8 @@ type PlaygroundInputToolsProps = {
   disabled?: boolean
   hasMessages?: boolean
   onClearMessages?: () => void
+  onGenerateImage?: (prompt: string) => void
+  prompt: string
   onConfigChange: <K extends keyof PlaygroundConfig>(
     key: K,
     value: PlaygroundConfig[K]
@@ -67,18 +76,47 @@ export function PlaygroundInputTools({
   disabled,
   hasMessages = false,
   onClearMessages,
+  onGenerateImage,
+  prompt,
   onConfigChange,
   onParameterEnabledChange,
   parameterEnabled,
 }: PlaygroundInputToolsProps) {
   const { t } = useTranslation()
+  const attachments = usePromptInputAttachments()
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileAction = (action: string) => {
+    if (action === 'upload-file') {
+      fileInputRef.current?.click()
+      return
+    }
+    if (action === 'upload-photo') {
+      photoInputRef.current?.click()
+      return
+    }
+
     const notice = getAttachmentActionNotice(action)
     toast.info(t(notice.title), {
       description: notice.description,
     })
+  }
+
+  const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.currentTarget.files?.length) {
+      attachments.add(event.currentTarget.files)
+    }
+    event.currentTarget.value = ''
+  }
+
+  const handleGenerateImage = () => {
+    if (!prompt.trim()) {
+      toast.warning(t('Text description of the desired image'))
+      return
+    }
+    onGenerateImage?.(prompt.trim())
   }
 
   const handleSearchAction = () => {
@@ -94,6 +132,23 @@ export function PlaygroundInputTools({
 
   return (
     <>
+      <input
+        aria-label={t('Upload file')}
+        className='hidden'
+        multiple
+        onChange={handleAttachmentChange}
+        ref={fileInputRef}
+        type='file'
+      />
+      <input
+        accept='image/*'
+        aria-label={t('Upload photo')}
+        className='hidden'
+        multiple
+        onChange={handleAttachmentChange}
+        ref={photoInputRef}
+        type='file'
+      />
       <PromptInputTools className='bg-background/70 border-border/60 rounded-lg border p-1 shadow-xs'>
         <Tooltip>
           <DropdownMenu>
@@ -128,6 +183,28 @@ export function PlaygroundInputTools({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <PromptInputButton
+                aria-label={t('Image Generation')}
+                className='text-muted-foreground hover:text-foreground hover:bg-muted/70 font-medium'
+                disabled={disabled || !onGenerateImage}
+                onClick={handleGenerateImage}
+                variant='ghost'
+              >
+                <span className='relative'>
+                  <ImagesIcon size={16} />
+                  <SparklesIcon className='absolute -top-1.5 -right-1.5 size-2.5' />
+                </span>
+              </PromptInputButton>
+            }
+          />
+          <TooltipContent>
+            <p>{t('Image Generation')}</p>
+          </TooltipContent>
         </Tooltip>
 
         <Tooltip>

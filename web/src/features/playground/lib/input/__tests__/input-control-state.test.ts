@@ -16,33 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { FileIcon, ImageIcon, type LucideIcon } from 'lucide-react'
+import { describe, expect, it } from 'vitest'
 
-type AttachmentAction = {
-  action: string
-  icon: LucideIcon
-  label: string
-}
+import { getInputControlState } from '../input-control-utils'
 
-type InputToolNotice = {
-  description?: string
-  title: string
-}
+describe('playground input control state', () => {
+  it('enables submit for an attachment without prompt text', () => {
+    const state = getInputControlState({
+      groups: [{ label: 'default', ratio: 1, value: 'default' }],
+      hasAttachments: true,
+      hasStopHandler: true,
+      models: [{ label: 'gpt-4o', value: 'gpt-4o' }],
+      text: '',
+    })
 
-export const ATTACHMENT_ACTIONS = [
-  { action: 'upload-file', icon: FileIcon, label: 'Upload file' },
-  { action: 'upload-photo', icon: ImageIcon, label: 'Upload photo' },
-] satisfies AttachmentAction[]
-
-export function getAttachmentActionNotice(action: string): InputToolNotice {
-  return {
-    description: action,
-    title: 'Feature in development',
-  }
-}
-
-export function getSearchActionNotice(): InputToolNotice {
-  return {
-    title: 'Search feature in development',
-  }
-}
+    expect(state.canSubmit).toBe(true)
+  })
+})

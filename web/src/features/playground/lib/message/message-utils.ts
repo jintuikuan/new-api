@@ -24,6 +24,7 @@ import type {
   MessageVersion,
   ChatCompletionMessage,
   ContentPart,
+  PlaygroundAttachment,
 } from '../../types'
 
 /**
@@ -54,7 +55,11 @@ export function getMessageContent(message: Message): string {
  * Check whether a message has non-empty content in its current version.
  */
 export function hasMessageContent(message: Message): boolean {
-  return getMessageContent(message).trim() !== ''
+  return (
+    getMessageContent(message).trim() !== '' ||
+    Boolean(message.attachments?.length) ||
+    Boolean(message.generatedImages?.length)
+  )
 }
 
 /**
@@ -76,6 +81,7 @@ export function updateCurrentVersionContent(
  */
 export function createUserMessage(
   content: string,
+  attachments: PlaygroundAttachment[] = [],
   createdAt: number = Date.now()
 ): Message {
   return {
@@ -83,6 +89,7 @@ export function createUserMessage(
     from: MESSAGE_ROLES.USER,
     versions: [createMessageVersion(content)],
     createdAt,
+    attachments,
   }
 }
 
@@ -111,24 +118,34 @@ export function createLoadingAssistantMessage(
  */
 export function buildMessageContent(
   text: string,
-  imageUrls: string[] = []
+  attachments: PlaygroundAttachment[] = []
 ): string | ContentPart[] {
-  const validImages = imageUrls.filter((url) => url.trim() !== '')
-
-  if (validImages.length === 0) {
+  if (attachments.length === 0) {
     return text
   }
 
-  const parts: ContentPart[] = [
-    {
-      type: 'text',
-      text: text || '',
-    },
-    ...validImages.map((url) => ({
-      type: 'image_url' as const,
-      image_url: { url: url.trim() },
-    })),
-  ]
+  const parts: ContentPart[] = []
+  if (text.trim()) {
+    parts.push({ type: 'text', text })
+  }
+
+  for (const attachment of attachments) {
+    if (attachment.type === 'image') {
+      parts.push({
+        type: 'image_url',
+        image_url: { url: attachment.dataUrl },
+      })
+      continue
+    }
+
+    parts.push({
+      type: 'file',
+      file: {
+        filename: attachment.filename,
+        file_data: attachment.dataUrl,
+      },
+    })
+  }
 
   return parts
 }
@@ -156,7 +173,10 @@ export function formatMessageForAPI(message: Message): ChatCompletionMessage {
   const currentVersion = getCurrentVersion(message)
   return {
     role: message.from,
-    content: currentVersion.content,
+    content: buildMessageContent(
+      currentVersion.content,
+      message.attachments ?? []
+    ),
   }
 }
 

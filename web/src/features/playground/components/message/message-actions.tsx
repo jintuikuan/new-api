@@ -108,7 +108,7 @@ export function MessageActions({
   const visibilityClass = getMessageActionsVisibilityClass(alwaysVisible)
   const actions: MessageActionItem[] = []
 
-  if (hasContent) {
+  if (content) {
     actions.push({
       className: isCopied ? 'text-green-600' : '',
       icon: isCopied ? Check : Copy,
@@ -119,7 +119,7 @@ export function MessageActions({
     })
   }
 
-  if (isAssistant && hasContent && !isLoading && onToggleSource) {
+  if (isAssistant && content && !isLoading && onToggleSource) {
     actions.push({
       icon: FileCode2,
       label: isSourceVisible
@@ -138,7 +138,7 @@ export function MessageActions({
     })
   }
 
-  if (hasContent && onEdit) {
+  if (content && onEdit) {
     actions.push({
       disabled: isGenerating,
       icon: Edit,

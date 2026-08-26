@@ -16,33 +16,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { FileIcon, ImageIcon, type LucideIcon } from 'lucide-react'
+import type { ModelOption } from '../../types'
 
-type AttachmentAction = {
-  action: string
-  icon: LucideIcon
-  label: string
-}
+const IMAGE_MODEL_PATTERN = /^(chatgpt-image|dall-e|gpt-image)/i
 
-type InputToolNotice = {
-  description?: string
-  title: string
-}
-
-export const ATTACHMENT_ACTIONS = [
-  { action: 'upload-file', icon: FileIcon, label: 'Upload file' },
-  { action: 'upload-photo', icon: ImageIcon, label: 'Upload photo' },
-] satisfies AttachmentAction[]
-
-export function getAttachmentActionNotice(action: string): InputToolNotice {
-  return {
-    description: action,
-    title: 'Feature in development',
+export function resolveImageGenerationModel(
+  currentModel: string,
+  models: ModelOption[]
+): string {
+  if (IMAGE_MODEL_PATTERN.test(currentModel)) {
+    return currentModel
   }
-}
 
-export function getSearchActionNotice(): InputToolNotice {
-  return {
-    title: 'Search feature in development',
-  }
+  const availableImageModels = models.filter((model) =>
+    IMAGE_MODEL_PATTERN.test(model.value)
+  )
+  return (
+    availableImageModels.find((model) => model.value === 'gpt-image-1')
+      ?.value ??
+    availableImageModels[0]?.value ??
+    'gpt-image-1'
+  )
 }

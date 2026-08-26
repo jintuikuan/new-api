@@ -16,33 +16,23 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { FileIcon, ImageIcon, type LucideIcon } from 'lucide-react'
+import { describe, expect, it } from 'vitest'
 
-type AttachmentAction = {
-  action: string
-  icon: LucideIcon
-  label: string
-}
+import { resolveImageGenerationModel } from '../image-generation-utils'
 
-type InputToolNotice = {
-  description?: string
-  title: string
-}
+describe('image generation model selection', () => {
+  it('keeps the selected image model', () => {
+    expect(resolveImageGenerationModel('gpt-image-1.5', [])).toBe(
+      'gpt-image-1.5'
+    )
+  })
 
-export const ATTACHMENT_ACTIONS = [
-  { action: 'upload-file', icon: FileIcon, label: 'Upload file' },
-  { action: 'upload-photo', icon: ImageIcon, label: 'Upload photo' },
-] satisfies AttachmentAction[]
-
-export function getAttachmentActionNotice(action: string): InputToolNotice {
-  return {
-    description: action,
-    title: 'Feature in development',
-  }
-}
-
-export function getSearchActionNotice(): InputToolNotice {
-  return {
-    title: 'Search feature in development',
-  }
-}
+  it('prefers an available GPT Image model for a text model selection', () => {
+    expect(
+      resolveImageGenerationModel('gpt-4o', [
+        { label: 'DALL-E 3', value: 'dall-e-3' },
+        { label: 'GPT Image', value: 'gpt-image-1' },
+      ])
+    ).toBe('gpt-image-1')
+  })
+})

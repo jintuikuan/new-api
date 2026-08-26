@@ -28,6 +28,13 @@ export interface MessageVersion {
   content: string
 }
 
+export type PlaygroundAttachment = {
+  dataUrl: string
+  filename: string
+  mediaType: string
+  type: 'file' | 'image'
+}
+
 export interface Message {
   key: string
   from: MessageRole
@@ -49,6 +56,8 @@ export interface Message {
   isContentComplete?: boolean
   status?: MessageStatus
   errorCode?: string | null
+  attachments?: PlaygroundAttachment[]
+  generatedImages?: string[]
 }
 
 // API payload types
@@ -58,10 +67,14 @@ export interface ChatCompletionMessage {
 }
 
 export interface ContentPart {
-  type: 'text' | 'image_url'
+  type: 'text' | 'image_url' | 'file'
   text?: string
   image_url?: {
     url: string
+  }
+  file?: {
+    filename: string
+    file_data: string
   }
 }
 
@@ -113,6 +126,24 @@ export interface ChatCompletionResponse {
     completion_tokens: number
     total_tokens: number
   }
+}
+
+export interface ImageGenerationRequest {
+  group: string
+  model: string
+  n: number
+  prompt: string
+  quality?: string
+  size: string
+}
+
+export interface ImageGenerationResponse {
+  created: number
+  data: Array<{
+    b64_json?: string
+    revised_prompt?: string
+    url?: string
+  }>
 }
 
 // Configuration types

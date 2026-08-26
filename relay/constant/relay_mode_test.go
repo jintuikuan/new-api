@@ -11,6 +11,7 @@ func TestPath2RelayMode(t *testing.T) {
 		path string
 		want int
 	}{
+		{path: "/pg/images/generations", want: RelayModeImagesGenerations},
 		{path: "/v1/alpha/search", want: RelayModeAlphaSearch},
 		{path: "/v1/alpha/search?foo=1", want: RelayModeAlphaSearch},
 	}
