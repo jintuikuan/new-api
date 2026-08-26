@@ -42,7 +42,7 @@ export const API_ENDPOINTS = {
 
 export const PLAYGROUND_ATTACHMENT_LIMITS = {
   MAX_FILES: 6,
-  MAX_FILE_SIZE: 10 * 1024 * 1024,
+  MAX_FILE_SIZE: 15 * 1024 * 1024,
 } as const
 
 // Default group — uses 'default' as the safe fallback; auto-group is
