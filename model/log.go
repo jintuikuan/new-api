@@ -615,6 +615,135 @@ type Stat struct {
 	Tpm   int `json:"tpm"`
 }
 
+type CacheHitStats struct {
+	TotalRequests        int64   `json:"total_requests"`
+	CacheHitRequests     int64   `json:"cache_hit_requests"`
+	CacheMissRequests    int64   `json:"cache_miss_requests"`
+	RequestHitRate       float64 `json:"request_hit_rate"`
+	CachedTokens         int64   `json:"cached_tokens"`
+	PromptCacheHitTokens int64   `json:"prompt_cache_hit_tokens"`
+	TotalInputTokens     int64   `json:"total_input_tokens"`
+	TokenHitRate         float64 `json:"token_hit_rate"`
+}
+
+type cacheHitLogRow struct {
+	PromptTokens int
+	Other        string
+}
+
+func accumulateCacheHitStats(rows []cacheHitLogRow) CacheHitStats {
+	stats := CacheHitStats{TotalRequests: int64(len(rows))}
+	for _, row := range rows {
+		other, err := common.StrToMap(row.Other)
+		if err != nil {
+			other = nil
+		}
+		cachedTokens := cacheStatInt64(other, "cache_tokens")
+		promptCacheHitTokens := cacheStatInt64(other, "prompt_cache_hit_tokens")
+		cachedForHit := cachedTokens
+		if promptCacheHitTokens > cachedForHit {
+			cachedForHit = promptCacheHitTokens
+		}
+		if cachedForHit > 0 {
+			stats.CacheHitRequests++
+		}
+		stats.CachedTokens += cachedTokens
+		stats.PromptCacheHitTokens += promptCacheHitTokens
+		inputTokens := cacheStatInt64(other, "input_tokens_total")
+		if inputTokens <= 0 {
+			inputTokens = int64(row.PromptTokens) + cachedTokens
+		}
+		if inputTokens > 0 {
+			stats.TotalInputTokens += inputTokens
+		}
+	}
+	stats.CacheMissRequests = stats.TotalRequests - stats.CacheHitRequests
+	if stats.TotalRequests > 0 {
+		stats.RequestHitRate = float64(stats.CacheHitRequests) / float64(stats.TotalRequests) * 100
+	}
+	if stats.TotalInputTokens > 0 {
+		stats.TokenHitRate = float64(stats.CachedTokens) / float64(stats.TotalInputTokens) * 100
+	}
+	return stats
+}
+
+func cacheStatInt64(values map[string]interface{}, key string) int64 {
+	if values == nil {
+		return 0
+	}
+	switch value := values[key].(type) {
+	case float64:
+		if value > 0 {
+			return int64(value)
+		}
+	case int:
+		if value > 0 {
+			return int64(value)
+		}
+	case int64:
+		if value > 0 {
+			return value
+		}
+	}
+	return 0
+}
+
+func sumCacheHitStats(tx *gorm.DB) (CacheHitStats, error) {
+	var rows []cacheHitLogRow
+	if err := tx.Select("prompt_tokens, other").Find(&rows).Error; err != nil {
+		return CacheHitStats{}, errors.New("查询缓存命中统计失败")
+	}
+	return accumulateCacheHitStats(rows), nil
+}
+
+func SumCacheHitStats(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) (CacheHitStats, error) {
+	tx := LOG_DB.Table("logs").Where("type = ?", LogTypeConsume)
+	var err error
+	if tx, err = applyExplicitLogTextFilter(tx, "username", username); err != nil {
+		return CacheHitStats{}, err
+	}
+	if tx, err = applyExplicitLogTextFilter(tx, "model_name", modelName); err != nil {
+		return CacheHitStats{}, err
+	}
+	if tokenName != "" {
+		tx = tx.Where("token_name = ?", tokenName)
+	}
+	if startTimestamp != 0 {
+		tx = tx.Where("created_at >= ?", startTimestamp)
+	}
+	if endTimestamp != 0 {
+		tx = tx.Where("created_at <= ?", endTimestamp)
+	}
+	if channel != 0 {
+		tx = tx.Where("channel_id = ?", channel)
+	}
+	if group != "" {
+		tx = tx.Where(logGroupCol+" = ?", group)
+	}
+	return sumCacheHitStats(tx)
+}
+
+func SumUserCacheHitStats(userID int, logType int, startTimestamp int64, endTimestamp int64, modelName string, tokenName string, group string) (CacheHitStats, error) {
+	tx := LOG_DB.Table("logs").Where("user_id = ? AND type = ?", userID, LogTypeConsume)
+	var err error
+	if tx, err = applyExplicitLogTextFilter(tx, "model_name", modelName); err != nil {
+		return CacheHitStats{}, err
+	}
+	if tokenName != "" {
+		tx = tx.Where("token_name = ?", tokenName)
+	}
+	if startTimestamp != 0 {
+		tx = tx.Where("created_at >= ?", startTimestamp)
+	}
+	if endTimestamp != 0 {
+		tx = tx.Where("created_at <= ?", endTimestamp)
+	}
+	if group != "" {
+		tx = tx.Where(logGroupCol+" = ?", group)
+	}
+	return sumCacheHitStats(tx)
+}
+
 func SumUsedQuota(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) (stat Stat, err error) {
 	tx := LOG_DB.Table("logs").Select("COALESCE(sum(quota), 0) quota")
 

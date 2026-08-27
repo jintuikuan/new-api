@@ -693,6 +693,7 @@
     "Cache Directory Disk Space": "緩存目錄磁碟空間",
     "Cache Directory Info": "緩存目錄資訊",
     "Cache Entries": "緩存條目",
+    "Cache Hit Rate": "緩存命中率",
     "Cache Hit Requests": "緩存命中請求",
     "Cache Miss Requests": "緩存未命中請求",
     "Cached Tokens": "緩存 Token",

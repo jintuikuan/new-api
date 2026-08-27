@@ -693,6 +693,7 @@
     "Cache Directory Disk Space": "Дисковое пространство каталога кэша",
     "Cache Directory Info": "Информация о каталоге кэша",
     "Cache Entries": "Записи кэша",
+    "Cache Hit Rate": "Доля попаданий в кэш",
     "Cache Hit Requests": "Запросы с попаданием в кэш",
     "Cache Miss Requests": "Запросы с промахом кэша",
     "Cached Tokens": "Кэшированные токены",

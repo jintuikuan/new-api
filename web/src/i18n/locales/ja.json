@@ -693,6 +693,7 @@
     "Cache Directory Disk Space": "キャッシュディレクトリのディスク容量",
     "Cache Directory Info": "キャッシュディレクトリ情報",
     "Cache Entries": "キャッシュエントリ",
+    "Cache Hit Rate": "キャッシュヒット率",
     "Cache Hit Requests": "キャッシュヒットリクエスト",
     "Cache Miss Requests": "キャッシュミスリクエスト",
     "Cached Tokens": "キャッシュ済みトークン",

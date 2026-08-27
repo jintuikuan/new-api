@@ -402,7 +402,6 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 	}
 	if originUsage != nil {
 		ObserveChannelAffinityUsageCacheByRelayFormat(ctx, billingUsage, relayInfo.GetFinalRequestRelayFormat())
-		ObserveUpstreamCacheHit(billingUsage)
 	}
 
 	adminRejectReason := common.GetContextKeyString(ctx, constant.ContextKeyAdminRejectReason)

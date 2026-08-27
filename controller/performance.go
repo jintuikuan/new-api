@@ -13,7 +13,6 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
-	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,8 +20,6 @@ import (
 type PerformanceStats struct {
 	// 缓存统计
 	CacheStats common.DiskCacheStats `json:"cache_stats"`
-	// 上游提示词缓存命中统计
-	UpstreamCacheHitStats service.UpstreamCacheHitStats `json:"upstream_cache_hit_stats"`
 	// 系统内存统计
 	MemoryStats MemoryStats `json:"memory_stats"`
 	// 磁盘缓存目录信息
@@ -124,7 +121,6 @@ func GetPerformanceStats(c *gin.Context) {
 
 	stats := PerformanceStats{
 		CacheStats:            cacheStats,
-		UpstreamCacheHitStats: service.GetUpstreamCacheHitStats(),
 		MemoryStats: MemoryStats{
 			Alloc:        memStats.Alloc,
 			TotalAlloc:   memStats.TotalAlloc,
@@ -162,7 +158,6 @@ func ClearDiskCache(c *gin.Context) {
 // ResetPerformanceStats 重置性能统计
 func ResetPerformanceStats(c *gin.Context) {
 	common.ResetDiskCacheStats()
-	service.ResetUpstreamCacheHitStats()
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

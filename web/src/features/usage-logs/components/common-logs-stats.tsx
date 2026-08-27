@@ -106,6 +106,16 @@ export function CommonLogsStats() {
         value={stats?.tpm || 0}
         accent='bg-slate-400/70'
       />
+      <StatBadge
+        label={t('Cache Hit Rate')}
+        value={`${(stats?.cache?.request_hit_rate || 0).toFixed(2)}%`}
+        accent='bg-emerald-500/70'
+      />
+      <StatBadge
+        label={t('Cached Tokens')}
+        value={stats?.cache?.cached_tokens || 0}
+        accent='bg-violet-500/70'
+      />
     </div>
   )
 }

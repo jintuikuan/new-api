@@ -693,6 +693,7 @@
     "Cache Directory Disk Space": "Dung lượng đĩa thư mục bộ nhớ đệm",
     "Cache Directory Info": "Thông tin thư mục bộ nhớ đệm",
     "Cache Entries": "Mục bộ nhớ đệm",
+    "Cache Hit Rate": "Tỷ lệ trúng bộ nhớ đệm",
     "Cache Hit Requests": "Yêu cầu trúng bộ nhớ đệm",
     "Cache Miss Requests": "Yêu cầu trượt bộ nhớ đệm",
     "Cached Tokens": "Token đã lưu đệm",
