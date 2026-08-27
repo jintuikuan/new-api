@@ -90,7 +90,7 @@ func UpdateChannelGroupStatus(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	status := 0
+	status := common.ChannelStatusManuallyDisabled
 	if req.Enabled {
 		status = common.ChannelStatusEnabled
 	}

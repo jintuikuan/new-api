@@ -66,7 +66,14 @@ export function CommonLogsStats() {
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
-  const { data: channelGroups = [] } = useQuery({ queryKey: ['channel-groups'], queryFn: async () => (await getChannelGroups()).data || [], enabled: isAdmin })
+  const { data: channelGroups = [] } = useQuery({
+    queryKey: ['channel-groups'],
+    queryFn: async () => {
+      const result = await getChannelGroups()
+      return Array.isArray(result.data) ? result.data : []
+    },
+    enabled: isAdmin,
+  })
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['usage-logs-stats', isAdmin, searchParams],

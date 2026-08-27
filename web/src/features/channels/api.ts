@@ -170,7 +170,7 @@ export async function batchUpdateChannelStatus(
 }
 
 export type ChannelGroup = { id: number; name: string; channel_ids: number[] }
-export async function getChannelGroups(): Promise<{ success: boolean; data?: ChannelGroup[] }> { const res = await api.get('/api/channel/groups'); return res.data }
+export async function getChannelGroups(): Promise<{ success: boolean; data?: ChannelGroup[] }> { const res = await api.get('/api/channel/groups', channelActionConfig()); return res.data }
 export async function createChannelGroup(name: string, channelIds: number[]): Promise<{ success: boolean }> { const res = await api.post('/api/channel/groups', { name, channel_ids: channelIds }, channelActionConfig()); return res.data }
 export async function updateChannelGroupStatus(id: number, enabled: boolean): Promise<{ success: boolean; data?: number }> { const res = await api.post(`/api/channel/groups/${id}/status`, { enabled }, channelActionConfig()); return res.data }
 
