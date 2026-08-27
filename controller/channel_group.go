@@ -14,7 +14,14 @@ type channelGroupRequest struct {
 }
 
 func channelGroupResponse(g model.ChannelGroup) gin.H {
-	return gin.H{"id": g.Id, "name": g.Name, "channel_ids": g.GetChannelIDs(), "created_at": g.CreatedAt, "updated_at": g.UpdatedAt}
+	ids := g.GetChannelIDs()
+	enabled := 0
+	for _, id := range ids {
+		if channel, err := model.GetChannelById(id, false); err == nil && channel.Status == common.ChannelStatusEnabled {
+			enabled++
+		}
+	}
+	return gin.H{"id": g.Id, "name": g.Name, "channel_ids": ids, "enabled": len(ids) > 0 && enabled == len(ids), "enabled_count": enabled, "channel_count": len(ids), "created_at": g.CreatedAt, "updated_at": g.UpdatedAt}
 }
 func GetChannelGroups(c *gin.Context) {
 	groups, err := model.ListChannelGroups()

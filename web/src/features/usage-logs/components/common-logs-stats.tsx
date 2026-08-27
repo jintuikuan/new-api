@@ -16,9 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -58,6 +59,7 @@ export function CommonLogsStats() {
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
+  const queryClient = useQueryClient()
   const { data: channelGroups = [] } = useQuery({
     queryKey: ['channel-groups'],
     queryFn: async () => {
@@ -66,6 +68,21 @@ export function CommonLogsStats() {
     },
     enabled: isAdmin,
   })
+
+  const handleGroupStatus = async (group: (typeof channelGroups)[number], enabled: boolean) => {
+    const result = await updateChannelGroupStatus(group.id, enabled)
+    if (!result.success) {
+      toast.error(t('Operation failed'))
+      return
+    }
+    toast.success(t('Channel group {{name}} {{status}} ({{count}} channels)', {
+      name: group.name,
+      status: enabled ? t('enabled') : t('disabled'),
+      count: result.data || 0,
+    }))
+    await queryClient.invalidateQueries({ queryKey: ['channel-groups'] })
+    await queryClient.invalidateQueries({ queryKey: ['usage-logs-stats'] })
+  }
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['usage-logs-stats', isAdmin, searchParams],
@@ -142,10 +159,10 @@ export function CommonLogsStats() {
             <div className='text-muted-foreground px-2 py-1 text-xs'>{t('Batch enable or disable channel groups')}</div>
             {channelGroups.length === 0 ? <div className='text-muted-foreground px-2 py-2 text-xs'>{t('No channel groups')}</div> : channelGroups.map((group) => (
               <div key={group.id} className='flex items-center justify-between gap-2 px-2 py-1'>
-                <span className='truncate text-xs'>{group.name}</span>
+                <span className='truncate text-xs'>{group.name} <span className='text-muted-foreground'>({group.enabled_count || 0}/{group.channel_count || group.channel_ids.length}) {group.enabled ? t('Active') : t('Inactive')}</span></span>
                 <span className='flex gap-1'>
-                  <Button variant='ghost' size='sm' className='h-6 px-1.5 text-xs' onClick={() => updateChannelGroupStatus(group.id, true)}>{t('Enable')}</Button>
-                  <Button variant='ghost' size='sm' className='h-6 px-1.5 text-xs' onClick={() => updateChannelGroupStatus(group.id, false)}>{t('Disable')}</Button>
+                  <Button variant='ghost' size='sm' className='h-6 px-1.5 text-xs' onClick={() => handleGroupStatus(group, true)}>{t('Enable')}</Button>
+                  <Button variant='ghost' size='sm' className='h-6 px-1.5 text-xs' onClick={() => handleGroupStatus(group, false)}>{t('Disable')}</Button>
                 </span>
               </div>
             ))}
