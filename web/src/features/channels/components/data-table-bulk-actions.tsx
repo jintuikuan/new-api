@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
 import { type Table } from '@tanstack/react-table'
-import { Power, PowerOff, Tag, Trash2 } from 'lucide-react'
+import { FolderPlus, Power, PowerOff, Tag, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -139,9 +139,10 @@ export function DataTableBulkActions<TData>({
         </Tooltip>
 
         <Tooltip>
-          <TooltipTrigger render={<Button variant='outline' size='icon' onClick={handleSaveGroup} className='size-8' aria-label={t('Save selected channels as group')} title={t('Save selected channels as group')} />}>
-            <Tag />
-            <span className='sr-only'>{t('Save selected channels as group')}</span>
+          <TooltipTrigger render={<Button variant='outline' size='sm' onClick={handleSaveGroup} className='h-8 gap-1.5 px-2.5' aria-label={t('Save selected channels as group')} title={t('Save selected channels as group')} />}>
+            <FolderPlus className='h-4 w-4' />
+            <span className='max-sm:hidden'>{t('Save as group')}</span>
+            <span className='sm:hidden'>{t('Group')}</span>
           </TooltipTrigger>
           <TooltipContent><p>{t('Save selected channels as group')}</p></TooltipContent>
         </Tooltip>

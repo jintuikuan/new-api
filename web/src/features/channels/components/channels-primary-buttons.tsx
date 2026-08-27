@@ -29,6 +29,7 @@ import {
   SortAsc,
   RefreshCw,
   ArrowUpFromLine,
+  FolderPlus,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -122,6 +123,17 @@ export function ChannelsPrimaryButtons() {
             onCheckedChange={handleBatchModeToggle}
           />
         </div>
+
+        <Button
+          variant={batchMode ? 'secondary' : 'outline'}
+          size='sm'
+          onClick={() => setBatchMode(true)}
+          className='gap-1.5'
+          title={t('Select channels to save as a group')}
+        >
+          <FolderPlus className='h-4 w-4' />
+          <span className='max-sm:hidden'>{t('Channel Groups')}</span>
+        </Button>
 
         <div className='hidden items-center gap-2 rounded-md border px-3 py-1.5 sm:flex'>
           <Tags className='text-muted-foreground h-4 w-4' />
