@@ -161,6 +161,16 @@ type PerformanceStats = {
     active_memory_buffers: number
     memory_cache_hits: number
   }
+  upstream_cache_hit_stats?: {
+    total_requests: number
+    cache_hit_requests: number
+    cache_miss_requests: number
+    cache_hit_rate: number
+    cached_tokens: number
+    prompt_cache_hit_tokens: number
+    prompt_tokens: number
+    total_tokens: number
+  }
   disk_space_info?: {
     total: number
     free: number
@@ -617,6 +627,38 @@ export function PerformanceSection(props: Props) {
                   {t('Memory Hits')}:{' '}
                   {stats.cache_stats?.memory_cache_hits ?? 0}
                 </StatusBadge>
+              </div>
+              <div className='space-y-2 rounded-lg border p-4'>
+                <p className='text-sm font-medium'>
+                  {t('Upstream Cache Hit Rate')}
+                </p>
+                <Progress
+                  value={
+                    stats.upstream_cache_hit_stats?.cache_hit_rate ?? 0
+                  }
+                />
+                <div className='text-muted-foreground flex justify-between text-xs'>
+                  <span>
+                    {t('Request Hit Rate')}:{' '}
+                    {(
+                      stats.upstream_cache_hit_stats?.cache_hit_rate ?? 0
+                    ).toFixed(2)}%
+                  </span>
+                  <span>
+                    {t('Cached Tokens')}:{' '}
+                    {stats.upstream_cache_hit_stats?.cached_tokens ?? 0}
+                  </span>
+                </div>
+                <div className='text-muted-foreground flex justify-between text-xs'>
+                  <span>
+                    {t('Cache Hit Requests')}:{' '}
+                    {stats.upstream_cache_hit_stats?.cache_hit_requests ?? 0}
+                  </span>
+                  <span>
+                    {t('Cache Miss Requests')}:{' '}
+                    {stats.upstream_cache_hit_stats?.cache_miss_requests ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
 
