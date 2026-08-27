@@ -150,7 +150,7 @@ export function CommonLogsStats() {
         </div>
       )}
       {isAdmin && (
-        <details className='relative'>
+        <details id='channel-groups' className='relative'>
           <summary className='border-input bg-background hover:bg-accent inline-flex h-7 cursor-pointer list-none items-center gap-1.5 rounded-md border px-2.5 text-xs'>
             <Settings2 className='h-3.5 w-3.5' />
             {t('Channel Groups')}
