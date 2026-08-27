@@ -25,6 +25,7 @@ import { formatLogQuota } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 import { getLogStats, getUserLogStats } from '../api'
+import { getChannelGroups, updateChannelGroupStatus } from '@/features/channels/api'
 import {
   DEFAULT_LOG_STATS,
   USAGE_LOGS_REFRESH_INTERVAL_MS,
@@ -55,6 +56,7 @@ export function CommonLogsStats() {
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
+  const { data: channelGroups } = useQuery({ queryKey: ['channel-groups'], queryFn: async () => (await getChannelGroups()).data || [], enabled: isAdmin })
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['usage-logs-stats', isAdmin, searchParams],
@@ -116,6 +118,17 @@ export function CommonLogsStats() {
         value={stats?.cache?.cached_tokens || 0}
         accent='bg-violet-500/70'
       />
+      {(stats?.cache_by_channel?.length || 0) > 0 && (
+        <div className='text-muted-foreground text-xs'>
+          {t('Channels')}: {stats?.cache_by_channel?.map((item) => `${item.channel_name || `#${item.channel_id}`} ${item.request_hit_rate.toFixed(2)}%`).join(' · ')}
+        </div>
+      )}
+      {isAdmin && channelGroups.length > 0 && channelGroups.map((group) => (
+        <span key={group.id} className='inline-flex items-center gap-1 text-xs'>
+          <button type='button' className='text-muted-foreground hover:text-foreground underline' onClick={() => updateChannelGroupStatus(group.id, true)}>{t('Enable')} {group.name}</button>
+          <button type='button' className='text-muted-foreground hover:text-foreground underline' onClick={() => updateChannelGroupStatus(group.id, false)}>{t('Disable')}</button>
+        </span>
+      ))}
     </div>
   )
 }

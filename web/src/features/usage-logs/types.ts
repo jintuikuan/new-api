@@ -265,6 +265,15 @@ export interface LogStatistics {
     total_input_tokens: number
     token_hit_rate: number
   }
+  cache_by_channel?: Array<{
+    channel_id: number
+    channel_name: string
+    total_requests: number
+    cache_hit_requests: number
+    request_hit_rate: number
+    cached_tokens: number
+    token_hit_rate: number
+  }>
 }
 
 // ============================================================================

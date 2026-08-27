@@ -46,6 +46,7 @@ import {
   handleBatchEnable,
   handleBatchSetTag,
 } from '../lib'
+import { createChannelGroup } from '../api'
 import type { Channel } from '../types'
 
 interface DataTableBulkActionsProps<TData> {
@@ -106,6 +107,13 @@ export function DataTableBulkActions<TData>({
     })
   }
 
+  const handleSaveGroup = async () => {
+    const name = window.prompt(t('Channel group name'))?.trim()
+    if (!name || selectedIds.length === 0) return
+    await createChannelGroup(name, selectedIds)
+    handleClearSelection()
+  }
+
   return (
     <>
       <BulkActionsToolbar table={table} entityName='channel'>
@@ -128,6 +136,14 @@ export function DataTableBulkActions<TData>({
           <TooltipContent>
             <p>{t('Enable selected channels')}</p>
           </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger render={<Button variant='outline' size='icon' onClick={handleSaveGroup} className='size-8' aria-label={t('Save selected channels as group')} title={t('Save selected channels as group')} />}>
+            <Tag />
+            <span className='sr-only'>{t('Save selected channels as group')}</span>
+          </TooltipTrigger>
+          <TooltipContent><p>{t('Save selected channels as group')}</p></TooltipContent>
         </Tooltip>
 
         <Tooltip>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -626,6 +627,12 @@ type CacheHitStats struct {
 	TokenHitRate         float64 `json:"token_hit_rate"`
 }
 
+type ChannelCacheHitStats struct {
+	ChannelID   int    `json:"channel_id"`
+	ChannelName string `json:"channel_name"`
+	CacheHitStats
+}
+
 type cacheHitLogRow struct {
 	PromptTokens int
 	Other        string
@@ -742,6 +749,96 @@ func SumUserCacheHitStats(userID int, logType int, startTimestamp int64, endTime
 		tx = tx.Where(logGroupCol+" = ?", group)
 	}
 	return sumCacheHitStats(tx)
+}
+
+func cacheStatsByChannel(tx *gorm.DB) ([]ChannelCacheHitStats, error) {
+	type row struct {
+		ChannelID    int
+		PromptTokens int
+		Other        string
+	}
+	var rows []row
+	if err := tx.Select("channel_id, prompt_tokens, other").Find(&rows).Error; err != nil {
+		return nil, errors.New("查询渠道缓存命中统计失败")
+	}
+	by := make(map[int][]cacheHitLogRow)
+	names := make(map[int]string)
+	for _, r := range rows {
+		by[r.ChannelID] = append(by[r.ChannelID], cacheHitLogRow{PromptTokens: r.PromptTokens, Other: r.Other})
+	}
+	var channels []Channel
+	if len(rows) > 0 {
+		idsQuery := make([]int, 0, len(by))
+		for id := range by {
+			idsQuery = append(idsQuery, id)
+		}
+		DB.Where("id IN ?", idsQuery).Find(&channels)
+		for _, c := range channels {
+			names[c.Id] = c.Name
+		}
+	}
+	ids := make([]int, 0, len(by))
+	for id := range by {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	result := make([]ChannelCacheHitStats, 0, len(ids))
+	for _, id := range ids {
+		s := accumulateCacheHitStats(by[id])
+		result = append(result, ChannelCacheHitStats{ChannelID: id, ChannelName: names[id], CacheHitStats: s})
+	}
+	return result, nil
+}
+
+func SumCacheHitStatsByChannel(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) ([]ChannelCacheHitStats, error) {
+	tx := LOG_DB.Table("logs").Where("type = ?", LogTypeConsume)
+	var err error
+	if tx, err = applyExplicitLogTextFilter(tx, "username", username); err != nil {
+		return nil, err
+	}
+	if tx, err = applyExplicitLogTextFilter(tx, "model_name", modelName); err != nil {
+		return nil, err
+	}
+	if tokenName != "" {
+		tx = tx.Where("token_name = ?", tokenName)
+	}
+	if startTimestamp != 0 {
+		tx = tx.Where("created_at >= ?", startTimestamp)
+	}
+	if endTimestamp != 0 {
+		tx = tx.Where("created_at <= ?", endTimestamp)
+	}
+	if channel != 0 {
+		tx = tx.Where("channel_id = ?", channel)
+	}
+	if group != "" {
+		tx = tx.Where(logGroupCol+" = ?", group)
+	}
+	return cacheStatsByChannel(tx)
+}
+
+func SumUserCacheHitStatsByChannel(userID int, logType int, startTimestamp int64, endTimestamp int64, modelName string, tokenName string, channel int, group string) ([]ChannelCacheHitStats, error) {
+	tx := LOG_DB.Table("logs").Where("user_id = ? AND type = ?", userID, LogTypeConsume)
+	var err error
+	if tx, err = applyExplicitLogTextFilter(tx, "model_name", modelName); err != nil {
+		return nil, err
+	}
+	if tokenName != "" {
+		tx = tx.Where("token_name = ?", tokenName)
+	}
+	if startTimestamp != 0 {
+		tx = tx.Where("created_at >= ?", startTimestamp)
+	}
+	if endTimestamp != 0 {
+		tx = tx.Where("created_at <= ?", endTimestamp)
+	}
+	if group != "" {
+		tx = tx.Where(logGroupCol+" = ?", group)
+	}
+	if channel != 0 {
+		tx = tx.Where("channel_id = ?", channel)
+	}
+	return cacheStatsByChannel(tx)
 }
 
 func SumUsedQuota(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) (stat Stat, err error) {
