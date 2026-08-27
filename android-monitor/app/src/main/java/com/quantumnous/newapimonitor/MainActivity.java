@@ -19,7 +19,7 @@ import android.widget.TextView;
 import android.app.AlertDialog;
 
 public final class MainActivity extends Activity {
-    private static final String DEFAULT_URL = "https://your-new-api.example.com";
+    private static final String DEFAULT_URL = "https://newapi.heywsf.com";
     private WebView webView;
     private ProgressBar progressBar;
     private String baseUrl;
@@ -27,6 +27,10 @@ public final class MainActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         baseUrl = getPreferences(MODE_PRIVATE).getString("base_url", DEFAULT_URL);
+        if (baseUrl == null || baseUrl.isEmpty() || baseUrl.contains("your-new-api.example.com")) {
+            baseUrl = DEFAULT_URL;
+            getPreferences(MODE_PRIVATE).edit().putString("base_url", baseUrl).apply();
+        }
         setContentView(createView()); configureWebView();
         if (state == null) webView.loadUrl(baseUrl + "/usage-logs/common"); else webView.restoreState(state);
     }
@@ -57,7 +61,12 @@ public final class MainActivity extends Activity {
     private void configureWebView() {
         webView.getSettings().setJavaScriptEnabled(true); webView.getSettings().setDomStorageEnabled(true); webView.getSettings().setDatabaseEnabled(true);
         webView.setWebChromeClient(new WebChromeClient() { @Override public void onProgressChanged(WebView v, int p) { progressBar.setProgress(p); progressBar.setVisibility(p >= 100 ? View.GONE : View.VISIBLE); } });
-        webView.setWebViewClient(new WebViewClient() { @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { Uri u = r.getUrl(); if (u.toString().startsWith(baseUrl)) return false; startActivity(new Intent(Intent.ACTION_VIEW, u)); return true; } });
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { Uri u = r.getUrl(); if (u.toString().startsWith(baseUrl)) return false; startActivity(new Intent(Intent.ACTION_VIEW, u)); return true; }
+            @Override public void onPageFinished(WebView view, String url) {
+                if (url.contains("/usage-logs/common")) view.evaluateJavascript("(function(){var e=document.getElementById('channel-groups');if(e){e.open=true;e.scrollIntoView({block:'center'});}})();", null);
+            }
+        });
     }
 
     @Override protected void onSaveInstanceState(Bundle out) { webView.saveState(out); super.onSaveInstanceState(out); }
