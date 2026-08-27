@@ -21,14 +21,6 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Settings2 } from 'lucide-react'
 import { formatLogQuota } from '@/lib/format'
@@ -141,26 +133,24 @@ export function CommonLogsStats() {
         </div>
       )}
       {isAdmin && (
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant='outline' size='sm' className='h-7 gap-1.5 px-2.5 text-xs' />}>
+        <details className='relative'>
+          <summary className='border-input bg-background hover:bg-accent inline-flex h-7 cursor-pointer list-none items-center gap-1.5 rounded-md border px-2.5 text-xs'>
             <Settings2 className='h-3.5 w-3.5' />
             {t('Channel Groups')}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='start' className='w-56'>
-            <DropdownMenuLabel>{t('Batch enable or disable channel groups')}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {channelGroups.length === 0 ? (
-              <DropdownMenuItem disabled>{t('No channel groups')}</DropdownMenuItem>
-            ) : channelGroups.flatMap((group) => [
-              <DropdownMenuItem key={`${group.id}-enable`} onClick={() => updateChannelGroupStatus(group.id, true)}>
-                {t('Enable')} {group.name}
-              </DropdownMenuItem>,
-              <DropdownMenuItem key={`${group.id}-disable`} onClick={() => updateChannelGroupStatus(group.id, false)}>
-                {t('Disable')} {group.name}
-              </DropdownMenuItem>,
-            ])}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </summary>
+          <div className='bg-popover text-popover-foreground absolute left-0 top-8 z-50 w-56 rounded-md border p-2 shadow-md'>
+            <div className='text-muted-foreground px-2 py-1 text-xs'>{t('Batch enable or disable channel groups')}</div>
+            {channelGroups.length === 0 ? <div className='text-muted-foreground px-2 py-2 text-xs'>{t('No channel groups')}</div> : channelGroups.map((group) => (
+              <div key={group.id} className='flex items-center justify-between gap-2 px-2 py-1'>
+                <span className='truncate text-xs'>{group.name}</span>
+                <span className='flex gap-1'>
+                  <Button variant='ghost' size='sm' className='h-6 px-1.5 text-xs' onClick={() => updateChannelGroupStatus(group.id, true)}>{t('Enable')}</Button>
+                  <Button variant='ghost' size='sm' className='h-6 px-1.5 text-xs' onClick={() => updateChannelGroupStatus(group.id, false)}>{t('Disable')}</Button>
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   )
