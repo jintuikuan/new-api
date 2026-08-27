@@ -20,7 +20,17 @@ import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Settings2 } from 'lucide-react'
 import { formatLogQuota } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -56,7 +66,7 @@ export function CommonLogsStats() {
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
-  const { data: channelGroups } = useQuery({ queryKey: ['channel-groups'], queryFn: async () => (await getChannelGroups()).data || [], enabled: isAdmin })
+  const { data: channelGroups = [] } = useQuery({ queryKey: ['channel-groups'], queryFn: async () => (await getChannelGroups()).data || [], enabled: isAdmin })
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['usage-logs-stats', isAdmin, searchParams],
@@ -123,12 +133,28 @@ export function CommonLogsStats() {
           {t('Channels')}: {stats?.cache_by_channel?.map((item) => `${item.channel_name || `#${item.channel_id}`} ${item.request_hit_rate.toFixed(2)}%`).join(' · ')}
         </div>
       )}
-      {isAdmin && channelGroups.length > 0 && channelGroups.map((group) => (
-        <span key={group.id} className='inline-flex items-center gap-1 text-xs'>
-          <button type='button' className='text-muted-foreground hover:text-foreground underline' onClick={() => updateChannelGroupStatus(group.id, true)}>{t('Enable')} {group.name}</button>
-          <button type='button' className='text-muted-foreground hover:text-foreground underline' onClick={() => updateChannelGroupStatus(group.id, false)}>{t('Disable')}</button>
-        </span>
-      ))}
+      {isAdmin && (
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant='outline' size='sm' className='h-7 gap-1.5 px-2.5 text-xs' />}>
+            <Settings2 className='h-3.5 w-3.5' />
+            {t('Channel Groups')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='start' className='w-56'>
+            <DropdownMenuLabel>{t('Batch enable or disable channel groups')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {channelGroups.length === 0 ? (
+              <DropdownMenuItem disabled>{t('No channel groups')}</DropdownMenuItem>
+            ) : channelGroups.flatMap((group) => [
+              <DropdownMenuItem key={`${group.id}-enable`} onClick={() => updateChannelGroupStatus(group.id, true)}>
+                {t('Enable')} {group.name}
+              </DropdownMenuItem>,
+              <DropdownMenuItem key={`${group.id}-disable`} onClick={() => updateChannelGroupStatus(group.id, false)}>
+                {t('Disable')} {group.name}
+              </DropdownMenuItem>,
+            ])}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   )
 }
