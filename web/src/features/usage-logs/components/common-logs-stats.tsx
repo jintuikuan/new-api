@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -60,11 +61,20 @@ export function CommonLogsStats() {
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
   const queryClient = useQueryClient()
+  const [groupsOpen, setGroupsOpen] = useState(false)
   const { data: channelGroups = [] } = useQuery({
     queryKey: ['channel-groups'],
     queryFn: async () => {
-      const result = await getChannelGroups()
-      return Array.isArray(result.data) ? result.data : []
+      try {
+        const result = await getChannelGroups()
+        if (!Array.isArray(result.data)) return []
+        return result.data.map((group) => ({
+          ...group,
+          channel_ids: Array.isArray(group.channel_ids) ? group.channel_ids : [],
+        }))
+      } catch {
+        return []
+      }
     },
     enabled: isAdmin,
   })
@@ -150,12 +160,12 @@ export function CommonLogsStats() {
         </div>
       )}
       {isAdmin && (
-        <details id='channel-groups' className='relative'>
-          <summary className='border-input bg-background hover:bg-accent inline-flex h-7 cursor-pointer list-none items-center gap-1.5 rounded-md border px-2.5 text-xs'>
+        <div id='channel-groups' className='relative'>
+          <Button variant='outline' size='sm' className='h-7 gap-1.5 px-2.5 text-xs' onClick={() => setGroupsOpen((open) => !open)}>
             <Settings2 className='h-3.5 w-3.5' />
             {t('Channel Groups')}
-          </summary>
-          <div className='bg-popover text-popover-foreground absolute left-0 top-8 z-50 w-56 rounded-md border p-2 shadow-md'>
+          </Button>
+          {groupsOpen && <div className='bg-popover text-popover-foreground absolute left-0 top-8 z-50 w-64 rounded-md border p-2 shadow-md'>
             <div className='text-muted-foreground px-2 py-1 text-xs'>{t('Batch enable or disable channel groups')}</div>
             {channelGroups.length === 0 ? <div className='text-muted-foreground px-2 py-2 text-xs'>{t('No channel groups')}</div> : channelGroups.map((group) => (
               <div key={group.id} className='flex items-center justify-between gap-2 px-2 py-1'>
@@ -166,8 +176,8 @@ export function CommonLogsStats() {
                 </span>
               </div>
             ))}
-          </div>
-        </details>
+          </div>}
+        </div>
       )}
     </div>
   )
